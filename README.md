@@ -4,7 +4,7 @@ Aplikace sbírá data z meteostanice pomocí Azure Function s využitím Timer T
 # Deployment
 - Před spuštěním aplikace je nutné mít
   - Docker https://www.docker.com/get-started/
-  - Není nutné, ale je vhodné mít editor, např. VS Code, JetBrains Rider, ...
+  - Editor VS Code, JetBrains Rider, ...
 ```
 # 1. Klonování repozitáře (přes terminál, kde se má aplikace nacházet)
 gh repo clone chromeckap/WeatherStation-Collection
@@ -34,4 +34,12 @@ Aplikaci je možné spustit i lokálně. Nutné je ovšem stáhnout PostgreSQL h
         "PostgresConnection": "Host=localhost;Port=5432;Database=replace-with-db;Username=replace-with-username;Password=replace-with-password"
     }
 }
+```
+Následně je nutné nainstalovat Azurite a spustit ho, v terminálu spusťte
+```
+# 1. Instalace Azurite
+npm install -g azurite
+
+#2. Spuštění Azurite
+azurite
 ```
