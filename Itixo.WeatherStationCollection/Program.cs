@@ -17,20 +17,23 @@ builder.Services.AddSingleton<IXmlParserService, XmlParserService>();
 
 var postgresConnection = Environment.GetEnvironmentVariable("PostgresConnection") 
                          ?? throw new Exception("PostgresConnection string not found in environment variables.");
+var weatherRepository = new WeatherRepository(postgresConnection);
+await weatherRepository.InitializeWeatherTableAsync();
 
-builder.Services.AddSingleton<IWeatherRepository>(new WeatherRepository(postgresConnection));
+builder.Services.AddSingleton<IWeatherRepository>(weatherRepository);
+
 
 builder.Services.AddSingleton<IWeatherService>(serviceProvider =>
 {
     var httpClientFactory = serviceProvider.GetRequiredService<IHttpClientFactory>();
-    var weatherRepository = serviceProvider.GetRequiredService<IWeatherRepository>();
+    var dataRepository = serviceProvider.GetRequiredService<IWeatherRepository>();
     var xmlParserService = serviceProvider.GetRequiredService<IXmlParserService>();
     var logger = serviceProvider.GetRequiredService<ILogger<WeatherService>>();
     
     var weatherStationUrl = Environment.GetEnvironmentVariable("WeatherStationUrl") 
                             ?? throw new Exception("WeatherStationUrl not found in environment variables.");
 
-    return new WeatherService(httpClientFactory, weatherRepository, xmlParserService, weatherStationUrl, logger);
+    return new WeatherService(httpClientFactory, dataRepository, xmlParserService, weatherStationUrl, logger);
 });
 
 builder.Build().Run();
