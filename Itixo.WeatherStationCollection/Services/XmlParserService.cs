@@ -15,7 +15,7 @@ public class XmlParserService : IXmlParserService
         var rootElement = parsedDocument.Root
             ?? throw new InvalidOperationException("Root element not found in XML document.");
 
-        var sensors = rootElement.Elements("sensor")
+        var sensors = rootElement.Descendants("sensor")
             .Select(sensor => new SensorData
             {
                 Type = sensor.Element("type")?.Value ?? string.Empty,
