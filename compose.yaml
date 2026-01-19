@@ -1,0 +1,62 @@
+﻿services:
+  
+  azurite:
+    container_name: azurite
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - "10000:10000" # blob
+      - "10001:10001" # queue
+      - "10002:10002" # table
+    volumes:
+      - azurite_data:/data
+    command: "azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --loose"
+    networks:
+      - weather-network
+
+  postgres:
+    container_name: postgres-db
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - weather-network
+
+  weather-station-api:
+    container_name: weather-station-collection
+    build:
+      context: .
+      dockerfile: Itixo.WeatherStationCollection/Dockerfile
+    ports:
+      - "7071:8080"
+    environment:
+      - AzureWebJobsStorage=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite:10000/devstoreaccount1;QueueEndpoint=http://azurite:10001/devstoreaccount1;TableEndpoint=http://azurite:10002/devstoreaccount1;
+      - FUNCTIONS_WORKER_RUNTIME=dotnet-isolated
+      - WeatherStationUrl=${WEATHER_STATION_URL}
+      - PostgresConnection=Host=postgres-db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - WEBSITES_INCLUDE_CLOUD_CERTS=false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      azurite:
+        condition: service_started
+    networks:
+      - weather-network
+
+volumes:
+  postgres_data:
+  azurite_data:
+
+networks:
+  weather-network:
+    driver: bridge
